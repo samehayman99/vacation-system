@@ -2,14 +2,14 @@ package com.project.vacation.service;
 
 import com.project.vacation.dto.VacationRequestCreate;
 import com.project.vacation.dto.VacationRequestResponse;
-import com.project.vacation.entity.Employee;
-import com.project.vacation.entity.RequestStatus;
-import com.project.vacation.entity.VacationRequest;
-import com.project.vacation.entity.VacationType;
+import com.project.vacation.dto.VacationRequestStatusUpdate;
+import com.project.vacation.entity.*;
 import com.project.vacation.exception.ResourceNotFoundException;
 import com.project.vacation.repository.EmployeeRepository;
+import com.project.vacation.repository.EmployeeVacationBalanceRepository;
 import com.project.vacation.repository.VacationRequestRepository;
 import com.project.vacation.repository.VacationTypeRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +23,7 @@ public class VacationRequestService {
     private final VacationRequestRepository vacationRequestRepository;
     private final EmployeeRepository employeeRepository;
     private final VacationTypeRepository vacationTypeRepository;
+    private final EmployeeVacationBalanceRepository balanceRepository;
     public List<VacationRequestResponse> getByEmployee(Long empId){
         List<VacationRequest> requests = vacationRequestRepository.findByEmployeeId(empId);
         List<VacationRequestResponse> results = new ArrayList<>();
@@ -49,9 +50,42 @@ public class VacationRequestService {
         return toResponse(vacationRequestRepository.save(vacationRequest));
     }
 
+    @Transactional
+    public VacationRequestResponse updateStatus(Long requestId, VacationRequestStatusUpdate dto){
+        VacationRequest request = findEntityById(requestId);
+
+        request.setStatus(dto.getStatus());
+
+        if (dto.getStatus() == RequestStatus.APPROVED && request.getStatus() != RequestStatus.APPROVED) {
+            deductBalance(request);
+        }
+
+        request.setStatus(dto.getStatus());
+        return toResponse(vacationRequestRepository.save(request));
+
+
+    }
+
+    private void deductBalance(VacationRequest request) {
+        EmployeeVacationBalanceId balanceId = new EmployeeVacationBalanceId(
+                request.getEmployee().getId(),
+                request.getVacationType().getId()
+        );
+
+        EmployeeVacationBalance balance = balanceRepository.findById(balanceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Balance not found for this employee/type"));
+
+        int remaining = balance.getDaysRemaining() - request.getDaysRequested();
+        if (remaining < 0) {
+            throw new IllegalStateException("Not enough vacation days remaining");
+        }
+
+        balance.setDaysRemaining(remaining);
+        balanceRepository.save(balance);
+    }
     private VacationRequest findEntityById(Long id) {
         return vacationRequestRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vacation type not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Vacation request not found: " + id));
     }
     private VacationRequestResponse toResponse(VacationRequest request) {
         VacationRequestResponse dto = new VacationRequestResponse();
