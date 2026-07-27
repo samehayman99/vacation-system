@@ -27,6 +27,7 @@ public class EmployeeVacationBalanceService {
     }
 
     private EmployeeVacationBalanceResponse toResponse(EmployeeVacationBalance balance) {
+
         return new EmployeeVacationBalanceResponse(
                 balance.getEmployee().getId(),
                 balance.getVacationType().getId(),
