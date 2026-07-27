@@ -1,5 +1,6 @@
 package com.project.vacation.service;
 
+import com.project.vacation.dto.EmployeeRequest;
 import com.project.vacation.dto.EmployeeResponse;
 import com.project.vacation.entity.Employee;
 import com.project.vacation.exception.ResourceNotFoundException;
@@ -15,6 +16,7 @@ import java.util.List;
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
+    private final EmployeeVacationBalanceService balanceService;
 
     public List<EmployeeResponse> getAll(){
 
@@ -26,6 +28,36 @@ public class EmployeeService {
         }
         return result;
     }
+
+    public EmployeeResponse getById(Long id) {
+        return toResponse(findEntityById(id));
+    }
+
+    public void delete(Long id) {
+        Employee employee = findEntityById(id);
+        employeeRepository.delete(employee);
+    }
+
+    public EmployeeResponse create (EmployeeRequest request){
+        Employee employee = new Employee();
+        employee.setFirstName(request.getFirstName());
+        employee.setLastName(request.getLastName());
+        employee.setEmail(request.getEmail());
+        employee.setHireDate(request.getHireDate());
+        if(request.getManagerId() != null) {
+            Employee manager = findEntityById(request.getManagerId());
+            employee.setManager(manager);
+        }
+        Employee saved = employeeRepository.save(employee);
+        balanceService.initializeBalancesForEmployee(saved);
+        return toResponse(saved);
+    }
+
+    private Employee findEntityById(Long id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
+    }
+
 
     private EmployeeResponse toResponse(Employee emp) {
 
@@ -43,14 +75,4 @@ public class EmployeeService {
 
         return employeeResponse;
     }
-
-    public EmployeeResponse getById(Long id) {
-        return toResponse(findEntityById(id));
-    }
-
-    private Employee findEntityById(Long id) {
-        return employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + id));
-    }
-
 }
