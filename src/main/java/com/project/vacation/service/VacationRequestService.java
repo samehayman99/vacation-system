@@ -9,7 +9,7 @@ import com.project.vacation.repository.EmployeeRepository;
 import com.project.vacation.repository.EmployeeVacationBalanceRepository;
 import com.project.vacation.repository.VacationRequestRepository;
 import com.project.vacation.repository.VacationTypeRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -34,9 +34,20 @@ public class VacationRequestService {
         return results;
     }
 
-    public VacationRequestResponse Create(VacationRequestCreate dto){
+    public List<VacationRequestResponse> getAll() {
+        List<VacationRequest> requests = vacationRequestRepository.findAll();
+        List<VacationRequestResponse> results = new ArrayList<>();
+
+        for (VacationRequest request : requests) {
+            results.add(toResponse(request));
+        }
+
+        return results;
+    }
+
+    public VacationRequestResponse create(VacationRequestCreate dto){
         VacationRequest vacationRequest = new VacationRequest();
-        Employee employee = employeeRepository.findById(dto.getEmpId()).orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + dto.getEmpId()));;
+        Employee employee = employeeRepository.findById(dto.getEmpId()).orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + dto.getEmpId()));
         vacationRequest.setEmployee(employee);
 
         VacationType type = vacationTypeRepository.findById(dto.getVacTypeId())

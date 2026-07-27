@@ -37,6 +37,25 @@ public class EmployeeService {
         Employee employee = findEntityById(id);
         employeeRepository.delete(employee);
     }
+    public EmployeeResponse update(Long id, EmployeeRequest request){
+
+        Employee employee = findEntityById(id);
+
+        employee.setFirstName(request.getFirstName());
+        employee.setLastName(request.getLastName());
+        employee.setEmail(request.getEmail());
+        employee.setHireDate(request.getHireDate());
+
+        if (request.getManagerId() != null) {
+            Employee manager = findEntityById(request.getManagerId());
+            employee.setManager(manager);
+        } else {
+            employee.setManager(null);
+        }
+
+        return toResponse(employeeRepository.save(employee));
+
+    }
 
     public EmployeeResponse create (EmployeeRequest request){
         Employee employee = new Employee();

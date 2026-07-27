@@ -1,10 +1,14 @@
 package com.project.vacation.service;
 
 import com.project.vacation.dto.EmployeeVacationBalanceResponse;
+import com.project.vacation.dto.EmployeeVacationSummaryResponse;
+import com.project.vacation.dto.VacationBalanceSummaryItem;
 import com.project.vacation.entity.Employee;
 import com.project.vacation.entity.EmployeeVacationBalance;
 import com.project.vacation.entity.EmployeeVacationBalanceId;
 import com.project.vacation.entity.VacationType;
+import com.project.vacation.exception.ResourceNotFoundException;
+import com.project.vacation.repository.EmployeeRepository;
 import com.project.vacation.repository.EmployeeVacationBalanceRepository;
 import com.project.vacation.repository.VacationTypeRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +21,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EmployeeVacationBalanceService {
 
-    final private EmployeeVacationBalanceRepository employeeVacationBalanceRepository;
+    private final EmployeeVacationBalanceRepository employeeVacationBalanceRepository;
     private final VacationTypeRepository vacationTypeRepository;
+    private final EmployeeRepository employeeRepository;
     public List<EmployeeVacationBalanceResponse> getBalancesForEmployee(Long empId){
         List<EmployeeVacationBalance> evb = employeeVacationBalanceRepository.findByEmployeeId(empId);
         List<EmployeeVacationBalanceResponse> result = new ArrayList<>();
@@ -46,6 +51,27 @@ public class EmployeeVacationBalanceService {
             employeeVacationBalanceRepository.save(employeeVacationBalance);
         }
     }
+
+    public EmployeeVacationSummaryResponse getSummaryForEmployee(Long empId) {
+        Employee employee = employeeRepository.findById(empId).orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + empId));
+
+        List<EmployeeVacationBalance> balances = employeeVacationBalanceRepository.findByEmployeeId(empId);
+
+        List<VacationBalanceSummaryItem> items = new ArrayList<>();
+
+        for(EmployeeVacationBalance employeeVacationBalance : balances){
+            VacationBalanceSummaryItem vacationBalanceSummaryItem = new VacationBalanceSummaryItem(
+                    employeeVacationBalance.getVacationType().getId(),
+                    employeeVacationBalance.getVacationType().getName(),
+                    employeeVacationBalance.getDaysRemaining(),
+                    employeeVacationBalance.getVacationType().getDaysPerYear()
+            );
+            items.add(vacationBalanceSummaryItem);
+        }
+
+        return new EmployeeVacationSummaryResponse(employee.getId(),(employee.getFirstName() + " " +employee.getLastName()), items);
+    }
+
     private EmployeeVacationBalanceResponse toResponse(EmployeeVacationBalance balance) {
 
         return new EmployeeVacationBalanceResponse(
