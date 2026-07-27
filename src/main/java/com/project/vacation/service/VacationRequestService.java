@@ -54,7 +54,6 @@ public class VacationRequestService {
     public VacationRequestResponse updateStatus(Long requestId, VacationRequestStatusUpdate dto){
         VacationRequest request = findEntityById(requestId);
 
-        request.setStatus(dto.getStatus());
 
         if (dto.getStatus() == RequestStatus.APPROVED && request.getStatus() != RequestStatus.APPROVED) {
             deductBalance(request);
