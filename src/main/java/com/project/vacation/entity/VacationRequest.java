@@ -42,6 +42,7 @@ public class VacationRequest {
     @Column(name = "status")
     private RequestStatus status;
 
+    @CreationTimestamp
     @Column(name = "requested_at")
     private LocalDateTime requestedAt;
 
