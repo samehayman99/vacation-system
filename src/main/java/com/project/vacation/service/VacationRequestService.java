@@ -76,6 +76,18 @@ public class VacationRequestService {
 
     }
 
+    @Transactional
+    public VacationRequestResponse cancel(Long requestId){
+        VacationRequest request = findEntityById(requestId);
+
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new IllegalStateException("Only pending requests can be cancelled");
+        }
+
+        request.setStatus(RequestStatus.CANCELLED);
+        return toResponse(vacationRequestRepository.save(request));
+    }
+
     private void deductBalance(VacationRequest request) {
         EmployeeVacationBalanceId balanceId = new EmployeeVacationBalanceId(
                 request.getEmployee().getId(),

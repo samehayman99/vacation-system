@@ -36,4 +36,9 @@ public class VacationRequestController {
     public VacationRequestResponse updateStatus(@PathVariable Long id, @Valid @RequestBody VacationRequestStatusUpdate dto) {
         return vacationRequestService.updateStatus(id, dto);
     }
+
+    @PatchMapping("/{id}/cancel")
+    public VacationRequestResponse cancel(@PathVariable Long id) {
+        return vacationRequestService.cancel(id);
+    }
 }
