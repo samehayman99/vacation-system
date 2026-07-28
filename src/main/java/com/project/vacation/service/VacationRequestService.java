@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -47,9 +48,14 @@ public class VacationRequestService {
     }
 
     public VacationRequestResponse create(VacationRequestCreate dto){
-        VacationRequest vacationRequest = new VacationRequest();
-        Employee employee = employeeRepository.findById(dto.getEmpId()).orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + dto.getEmpId()));
-        vacationRequest.setEmployee(employee);
+
+        boolean hasPending = vacationRequestRepository.existsByEmployeeIdAndStatus(dto.getEmpId(), RequestStatus.PENDING);
+        if (hasPending) {
+            throw new IllegalStateException("You already have a pending vacation request");
+        }
+
+        Employee employee = employeeRepository.findById(dto.getEmpId())
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + dto.getEmpId()));
 
         VacationType type = vacationTypeRepository.findById(dto.getVacTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vacation type not found: " + dto.getVacTypeId()));
@@ -58,10 +64,11 @@ public class VacationRequestService {
             throw new IllegalArgumentException("End date cannot be before start date");
         }
 
-        List<VacationRequest> existingRequests = vacationRequestRepository.findByEmployeeIdAndStatusIn(dto.getEmpId(),
-                List.of(RequestStatus.PENDING, RequestStatus.APPROVED));
+        Optional<VacationRequest> lastRequest = vacationRequestRepository
+                .findFirstByEmployeeIdAndStatusNotOrderByRequestedAtDesc(dto.getEmpId(), RequestStatus.CANCELLED);
 
-        for (VacationRequest existing : existingRequests) {
+        if (lastRequest.isPresent()) {
+            VacationRequest existing = lastRequest.get();
             boolean overlaps = dto.getStartDate().isBefore(existing.getEndDate().plusDays(1))
                     && existing.getStartDate().isBefore(dto.getEndDate().plusDays(1));
 
@@ -69,12 +76,15 @@ public class VacationRequestService {
                 throw new IllegalStateException("You already have a request overlapping these dates");
             }
         }
+
         long daysBetween = ChronoUnit.DAYS.between(dto.getStartDate(), dto.getEndDate()) + 1;
 
+        VacationRequest vacationRequest = new VacationRequest();
+        vacationRequest.setEmployee(employee);
         vacationRequest.setVacationType(type);
         vacationRequest.setEndDate(dto.getEndDate());
         vacationRequest.setStartDate(dto.getStartDate());
-        vacationRequest.setDaysRequested((int)daysBetween);
+        vacationRequest.setDaysRequested((int) daysBetween);
         vacationRequest.setStatus(RequestStatus.PENDING);
 
         return toResponse(vacationRequestRepository.save(vacationRequest));
