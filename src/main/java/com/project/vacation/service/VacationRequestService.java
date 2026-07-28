@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,10 +53,28 @@ public class VacationRequestService {
 
         VacationType type = vacationTypeRepository.findById(dto.getVacTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vacation type not found: " + dto.getVacTypeId()));
+
+        if (dto.getEndDate().isBefore(dto.getStartDate())) {
+            throw new IllegalArgumentException("End date cannot be before start date");
+        }
+
+        List<VacationRequest> existingRequests = vacationRequestRepository.findByEmployeeIdAndStatusIn(dto.getEmpId(),
+                List.of(RequestStatus.PENDING, RequestStatus.APPROVED));
+
+        for (VacationRequest existing : existingRequests) {
+            boolean overlaps = dto.getStartDate().isBefore(existing.getEndDate().plusDays(1))
+                    && existing.getStartDate().isBefore(dto.getEndDate().plusDays(1));
+
+            if (overlaps) {
+                throw new IllegalStateException("You already have a request overlapping these dates");
+            }
+        }
+        long daysBetween = ChronoUnit.DAYS.between(dto.getStartDate(), dto.getEndDate()) + 1;
+
         vacationRequest.setVacationType(type);
         vacationRequest.setEndDate(dto.getEndDate());
         vacationRequest.setStartDate(dto.getStartDate());
-        vacationRequest.setDaysRequested(dto.getDaysRequested());
+        vacationRequest.setDaysRequested((int)daysBetween);
         vacationRequest.setStatus(RequestStatus.PENDING);
 
         return toResponse(vacationRequestRepository.save(vacationRequest));

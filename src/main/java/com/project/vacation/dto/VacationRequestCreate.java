@@ -26,6 +26,6 @@ public class VacationRequestCreate {
     @NotNull
     private LocalDate endDate;
 
-    @NotNull @Positive
-    private Integer daysRequested;
+//    @NotNull @Positive
+//    private Integer daysRequested;
 }
