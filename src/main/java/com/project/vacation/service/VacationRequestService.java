@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -115,6 +116,19 @@ public class VacationRequestService {
 
         request.setStatus(RequestStatus.CANCELLED);
         return toResponse(vacationRequestRepository.save(request));
+    }
+
+    public List<VacationRequestResponse> getOnLeaveToday() {
+        List<VacationRequest> onLeave = vacationRequestRepository.findByStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                RequestStatus.APPROVED, LocalDate.now(), LocalDate.now()
+        );
+
+        List<VacationRequestResponse> responses = new ArrayList<>();
+        for (VacationRequest vacationRequest : onLeave){
+
+            responses.add(toResponse(vacationRequest));
+        }
+        return responses;
     }
 
     private void deductBalance(VacationRequest request) {

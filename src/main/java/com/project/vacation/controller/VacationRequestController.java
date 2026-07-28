@@ -41,4 +41,9 @@ public class VacationRequestController {
     public VacationRequestResponse cancel(@PathVariable Long id) {
         return vacationRequestService.cancel(id);
     }
+
+    @GetMapping("/on-leave-today")
+    public List<VacationRequestResponse>getOnLeaveToday(){
+        return vacationRequestService.getOnLeaveToday();
+    }
 }

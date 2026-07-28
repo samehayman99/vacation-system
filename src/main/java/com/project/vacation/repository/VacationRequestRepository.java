@@ -5,6 +5,7 @@ import com.project.vacation.entity.RequestStatus;
 import com.project.vacation.entity.VacationRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,4 +16,5 @@ public interface VacationRequestRepository extends JpaRepository<VacationRequest
     List<VacationRequest> findByEmployeeIdAndStatusIn(Long empId, List<RequestStatus> statuses);
     boolean existsByEmployeeIdAndStatus(Long empId, RequestStatus status);
     Optional<VacationRequest> findFirstByEmployeeIdAndStatusNotOrderByRequestedAtDesc(Long empId, RequestStatus status);
+    List<VacationRequest> findByStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(RequestStatus status, LocalDate date1, LocalDate date2);
 }
