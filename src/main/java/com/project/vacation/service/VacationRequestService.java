@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -48,6 +49,22 @@ public class VacationRequestService {
         return results;
     }
 
+    private int countWorkingDays(LocalDate start, LocalDate end) {
+        int workingDays = 0;
+        LocalDate date = start;
+
+        while (!date.isAfter(end) ) {
+            DayOfWeek day = date.getDayOfWeek();
+
+            if ( day != DayOfWeek.FRIDAY && day != DayOfWeek.SATURDAY ) {
+                workingDays++;
+            }
+
+            date = date.plusDays(1);
+        }
+        return workingDays;
+    }
+
     public VacationRequestResponse create(VacationRequestCreate dto){
 
         boolean hasPending = vacationRequestRepository.existsByEmployeeIdAndStatus(dto.getEmpId(), RequestStatus.PENDING);
@@ -78,14 +95,15 @@ public class VacationRequestService {
             }
         }
 
-        long daysBetween = ChronoUnit.DAYS.between(dto.getStartDate(), dto.getEndDate()) + 1;
+        int workingDays = countWorkingDays(dto.getStartDate(), dto.getEndDate());
+//        long daysBetween = ChronoUnit.DAYS.between(dto.getStartDate(), dto.getEndDate()) + 1;
 
         VacationRequest vacationRequest = new VacationRequest();
         vacationRequest.setEmployee(employee);
         vacationRequest.setVacationType(type);
         vacationRequest.setEndDate(dto.getEndDate());
         vacationRequest.setStartDate(dto.getStartDate());
-        vacationRequest.setDaysRequested((int) daysBetween);
+        vacationRequest.setDaysRequested(workingDays);
         vacationRequest.setStatus(RequestStatus.PENDING);
 
         return toResponse(vacationRequestRepository.save(vacationRequest));
