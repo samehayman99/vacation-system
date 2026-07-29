@@ -3,6 +3,8 @@ package com.project.vacation.controller;
 import com.project.vacation.dto.VacationTypeDTO;
 import com.project.vacation.service.VacationTypeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,8 +27,8 @@ public class VacationTypeController {
     }
 
     @PostMapping
-    public VacationTypeDTO create(@RequestBody VacationTypeDTO dto) {
-        return vacationTypeService.create(dto);
+    public ResponseEntity<VacationTypeDTO> create(@RequestBody VacationTypeDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(vacationTypeService.create(dto));
     }
 
     @PutMapping("/{id}")
@@ -35,7 +37,8 @@ public class VacationTypeController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         vacationTypeService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

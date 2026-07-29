@@ -6,6 +6,8 @@ import com.project.vacation.dto.VacationRequestStatusUpdate;
 import com.project.vacation.service.VacationRequestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,8 +30,9 @@ public class VacationRequestController {
     }
 
     @PostMapping
-    public VacationRequestResponse create(@Valid @RequestBody VacationRequestCreate dto) {
-        return vacationRequestService.create(dto);
+    public ResponseEntity<VacationRequestResponse> create(@Valid @RequestBody VacationRequestCreate dto) {
+        VacationRequestResponse created = vacationRequestService.create(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PatchMapping("/{id}/status")

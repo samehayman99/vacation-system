@@ -5,6 +5,8 @@ import com.project.vacation.dto.EmployeeResponse;
 import com.project.vacation.service.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,8 +29,10 @@ public class EmployeeController {
     }
 
     @PostMapping
-    public EmployeeResponse create(@Valid @RequestBody EmployeeRequest request) {
-        return employeeService.create(request);
+    public ResponseEntity<EmployeeResponse> create(@Valid @RequestBody EmployeeRequest request) {
+        EmployeeResponse created = employeeService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+
     }
 
     @PutMapping("/{id}")
@@ -37,7 +41,8 @@ public class EmployeeController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         employeeService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
