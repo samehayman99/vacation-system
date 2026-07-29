@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Setter
 @Getter
-@ToString(exclude = {"employee", "vacationType"})
-@EqualsAndHashCode(exclude = {"employee", "vacationType"})
+@ToString(exclude = {"employee", "vacationType", "approvedBy"})
+@EqualsAndHashCode(exclude = {"employee", "vacationType","approvedBy"})
 public class VacationRequest {
 
     @Id
@@ -46,4 +46,10 @@ public class VacationRequest {
     @Column(name = "requested_at")
     private LocalDateTime requestedAt;
 
+    @Column(name = "approved_at")
+    private LocalDateTime  approvedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY )
+    @JoinColumn(name = "approved_by")
+    private Employee approvedBy;
 }
